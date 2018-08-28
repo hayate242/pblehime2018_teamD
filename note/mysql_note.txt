@@ -1,0 +1,70 @@
+MariaDB [TeamD]> select * from members_locations;
++----+-----------+--------+------------+-------------+----------+--------------------+----------+
+| id | user_name | time   | latitude   | longitude   | altitude | accuracy           | velocity |
++----+-----------+--------+------------+-------------+----------+--------------------+----------+
+|  1 | yokota    | 141332 | 33.8489194 | 132.7701966 | 0.0      | 17.736000061035156 | 0.0      |
++----+-----------+--------+------------+-------------+----------+--------------------+----------+
+1 row in set (0.00 sec)
+
+MariaDB [TeamD]> desc team_names;
++-----------+--------------+------+-----+---------+----------------+
+| Field     | Type         | Null | Key | Default | Extra          |
++-----------+--------------+------+-----+---------+----------------+
+| id        | int(11)      | NO   | PRI | NULL    | auto_increment |
+| team_name | varchar(100) | NO   |     | NULL    |                |
+| password  | varchar(100) | NO   |     | NULL    |                |
+| created   | datetime     | YES  |     | NULL    |                |
++-----------+--------------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+MariaDB [TeamD]> alter table team_names add `owner_name` varchar(100) NOT NULL;
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+MariaDB [TeamD]> desc team_names;
++------------+--------------+------+-----+---------+----------------+
+| Field      | Type         | Null | Key | Default | Extra          |
++------------+--------------+------+-----+---------+----------------+
+| id         | int(11)      | NO   | PRI | NULL    | auto_increment |
+| team_name  | varchar(100) | NO   |     | NULL    |                |
+| password   | varchar(100) | NO   |     | NULL    |                |
+| created    | datetime     | YES  |     | NULL    |                |
+| owner_name | varchar(100) | NO   |     | NULL    |                |
++------------+--------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+MariaDB [TeamD]> insert into `team_names` values(1, "test_team", "pass", "20180828142800", "test_user");
+Query OK, 1 row affected (0.00 sec)
+
+MariaDB [TeamD]> select * from team_names;
++----+-----------+----------+---------------------+------------+
+| id | team_name | password | created             | owner_name |
++----+-----------+----------+---------------------+------------+
+|  1 | test_team | pass     | 2018-08-28 14:28:00 | test_user  |
++----+-----------+----------+---------------------+------------+
+1 row in set (0.00 sec)
+
+MariaDB [TeamD]> desc team_members;
++-----------+--------------+------+-----+---------+----------------+
+| Field     | Type         | Null | Key | Default | Extra          |
++-----------+--------------+------+-----+---------+----------------+
+| id        | int(11)      | NO   | PRI | NULL    | auto_increment |
+| team_name | varchar(100) | NO   |     | NULL    |                |
+| user_name | varchar(100) | NO   |     | NULL    |                |
++-----------+--------------+------+-----+---------+----------------+
+3 rows in set (0.00 sec)
+
+MariaDB [TeamD]> insert into team_members(1, "test_team", "test_user");
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '1, "test_team", "test_user")' at line 1
+MariaDB [TeamD]> insert into team_members values (1, "test_team", "test_user");
+Query OK, 1 row affected (0.00 sec)
+
+MariaDB [TeamD]> select * from team_members;
++----+-----------+-----------+
+| id | team_name | user_name |
++----+-----------+-----------+
+|  1 | test_team | test_user |
++----+-----------+-----------+
+1 row in set (0.01 sec)
+
+MariaDB [TeamD]>
