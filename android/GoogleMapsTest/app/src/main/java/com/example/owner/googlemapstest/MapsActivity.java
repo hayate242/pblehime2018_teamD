@@ -24,8 +24,10 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.Spanned;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,6 +46,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
@@ -68,8 +71,14 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /*
@@ -91,11 +100,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Intent serviceIntent;
     private Thread thread;
     String team_name = "test_team";
+    TextView membersText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+//        text設定
+        membersText = (TextView) findViewById(R.id.membersText);
+        membersText.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         serviceIntent = new Intent(this, GPSService.class);
         startService(serviceIntent);
@@ -231,14 +245,49 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return t;
         }
 
+//        jsonをぱーすしてStringに変換
+        public String[] parse_json(String _result){
+            String data[] = new String[100];
+            try {
+                JSONObject json = new JSONObject(_result);
+                Log.d("HTTP REQ", String.valueOf(json));
+                for( int i = 0; i < 100; i++ ){
+                    data[i] = json.getString("user"+i);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return data;
+        }
+
+        public void set_members(String _result){
+            String members = "";
+            try {
+                JSONObject json = new JSONObject(_result);
+                for( int i = 0; i < 100; i++ ){
+                    members += json.getString("user"+i);
+                    members += ",";
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            membersText.setText(members);
+        }
+
         String _result;
+        String team_members[] = new String[256];
         @Override
         protected void onPostExecute(String result){ //自動的に呼ばれるので自分で呼び出さないこと！
             if( flag ){ //戻り値を利用する(getloc.phpを呼び出す)場合
                 // statusView.setText(result);
                 if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
                     _result = result;
-                    Log.d("getresult", result);
+                    Log.d("getresult", _result);
+
+                    String[] users = parse_json(_result);
+                    set_members(_result);
+//                    Log.d("parsed_string", users[3]);
+
                     /*runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
