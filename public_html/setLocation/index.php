@@ -8,6 +8,12 @@
     echo"<br>";
     print_r($data);
 
+    // user_nameがないなら登録しない
+    if(empty($user_name)){
+        echo "no name";
+        exit;
+    }
+
     try {
         $dbh = new PDO('mysql:host=localhost;dbname=TeamD', $user, $pass);
         $sql = "INSERT INTO members_locations (user_name, time, latitude, longitude, altitude, accuracy, velocity) VALUES (

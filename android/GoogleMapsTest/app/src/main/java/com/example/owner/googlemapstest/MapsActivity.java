@@ -156,8 +156,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Toast.makeText(this, "あなたのIDは " + id, Toast.LENGTH_SHORT).show();
         }else{
             inputID();
+            checkLogin("team_name");
         }
-        checkLogin("login");
     }
 
     private void checkLogin( String fileneame) {
@@ -492,18 +492,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 String jikan = locaStr[2].substring(0, 2) + ":" + locaStr[2].substring(2, 4) + ":" + locaStr[2].substring(4);
                                 float[] results = new float[1];
                                 String kyori = "―";
-                                if (locaStr[0].equals(id)) kyori = "自分";
+                                if (locaStr[0].equals(id)){
+                                    kyori = "自分";
+                                }
                                 else if( gpsService != null && gpsService.lat > 0 ) {
                                     Location.distanceBetween(gpsService.lat, gpsService.lng,
                                             Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]), results);
                                     if (results != null && results.length > 0) {
-                                        kyori = String.valueOf((int) ((double) results[0] + 0.5)) + "m";
+                                        kyori = "距離:"+String.valueOf((int) ((double) results[0] + 0.5)) + "m";
                                     }
                                 }
                                 Paint w_paint = new Paint();
                                 w_paint.setAntiAlias(true);
                                 w_paint.setColor(col[i % col.length]);
-                                w_paint.setTextSize(32);
+                                w_paint.setTextSize(60);
                                 String txt = jikan + " " + _id + " " + kyori;
                                 w_paint.getTextBounds(txt, 0, txt.length(), new Rect());
                                 Paint.FontMetrics fm = w_paint.getFontMetrics();//フォントマトリックス
@@ -511,15 +513,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 int fmHeight = (int) (Math.abs(fm.top) + fm.bottom);//高さ
                                 Bitmap bmp = Bitmap.createBitmap(mtw, fmHeight, Bitmap.Config.ARGB_8888);
                                 Canvas cv = new Canvas(bmp);
-                                cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
+                                if( kyori.equals("自分") ){
+                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromBitmap(bmp));
+                                    marker[i] = mMap.addMarker(options);
+                                }else {
+                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
+                                }
+
+//                                cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
+
+
                                 //                                マーカー設置、条件でアイコン変更。
                                 if (i < 5) {
                                     MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test));
                                     marker[i] = mMap.addMarker(options);
+                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
                                 } else if (i == 5) {
                                     MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test1));
                                     marker[i] = mMap.addMarker(options);
-
+                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
                                 }
 //                              それ以外のときはデフォルト
                                 else {
@@ -549,7 +561,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             if(getLocationFlag) {
 //                geturl = "http://pbl.jp/td/getLocation/index.php?user_names=";
-                geturl = "http://pbl.jp/getloc.php?team_name="+ team_name;
+                geturl = "http://pbl.jp/td/getLocations/index.php?team_name="+ team_name;
                 Log.d("Get",geturl);
             }
             ht  = new Http(geturl, true);
