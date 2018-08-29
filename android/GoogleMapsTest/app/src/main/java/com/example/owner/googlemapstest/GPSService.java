@@ -14,7 +14,9 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
@@ -129,6 +131,7 @@ public class GPSService extends Service implements LocationListener {
         }
     }
 
+
     /* LocationListener Methods */
     @Override
     public void onLocationChanged(Location location) {
@@ -151,14 +154,34 @@ public class GPSService extends Service implements LocationListener {
         String time = "00000" + (hour * 10000 + minute * 100 + second);
         time = time.substring(time.length()-6);
 
-        Http ht = new Http("http://pbl.jp/td/setLocation/index.php?" +
-                id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed, false);
-        ht.execute();
-        Log.d("Get","http://pbl.jp/td/setLocation/index.php?" +
-                id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed);
+        if(get_ID()){
+            Http ht = new Http("http://pbl.jp/td/setLocation/index.php?" +
+                    id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed, false);
+            ht.execute();
+            Log.d("Get","http://pbl.jp/td/setLocation/index.php?" +
+                    id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed);
+        }
 
         prev_lat = lat;
         prev_lng = lng;
+    }
+
+    private Boolean get_ID() {
+        File file = new File(this.getFilesDir(), "settings"); //ファイル名を指定
+        if( file.exists() ){ //すでにファイルが存在している場合
+            try{
+                RandomAccessFile f = new RandomAccessFile(file, "r");
+                byte[] bytes = new byte[(int)f.length()];
+                f.readFully(bytes);
+                f.close();
+                String[] array = new String(bytes).split(","); // , で分割する(拡張性を考慮)
+                id = array[0];
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        Log.d("get_ID", id);
+        return true;
     }
 
     @Override

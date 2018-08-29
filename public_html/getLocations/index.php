@@ -8,6 +8,7 @@ $pass = "";
 
 $userData = "";
 $temp_array = array();
+$result = "";
 
 
 try {
@@ -31,10 +32,11 @@ try {
         $temp_array = array_values($temp_array);
         $userData = implode(",", $temp_array);
         // var_dump($row);
-        print($userData);
-        echo "\n";
+        // print($userData);
+        // echo "\n";
+        $result = $result.$userData."\n";
     }
-    // var_dump($userData);
+    echo $result;
     // print_r($userData);  
     //jsonとして出力
     // header('Content-type: application/json');

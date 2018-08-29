@@ -91,9 +91,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private final int REQUEST_PERMISSION = 1000;
-    String id = "";
-    private Marker[] marker = new Marker[50];
-    private LatLng[] latlng = new LatLng[50];
+    static String id = "";
+    private Marker[] marker = new Marker[50000];
+    private LatLng[] latlng = new LatLng[50000];
     int[] col = {0xff0000ff,0xff00a000,0xffff0000,0xff00ffff,0xffff00ff,0xffa0a000,0xff00ff00,0xff00a0ff,0xff8080ff,0xff666666,0xffff80ff};
     private int idcnt = 0;
     String result;
@@ -105,6 +105,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String members[] = new String[100];
     TextView membersText;
     Button loginBtn;
+    Button idBtn;
 
     Boolean startLoginFlag = false;
     Boolean memberFlag = false;
@@ -126,6 +127,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 login();
+            }
+        });
+        idBtn = (Button)findViewById(R.id.idBtn);
+        idBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                inputID();
             }
         });
 
@@ -525,8 +533,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             PolylineOptions popt = new PolylineOptions();
                                             popt.add(latlng[i - 1]); // ひとつ前の緯度経度
                                             popt.add(latlng[i]); // 今の緯度経度
-                                            popt.color(0x8000B3FD);  //ARGBカラーを指定 (Aは透明度)
-                                            popt.width(20);
+                                            popt.color(0xFF00B3FD);  //ARGBカラーを指定 (Aは透明度)
+                                            popt.width(15);
                                             Polyline polyline = mMap.addPolyline(popt);
                                         }
                                     } else {
@@ -542,7 +550,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                         }
                                         //                              それ以外のときはデフォルト
                                         else {
-                                            MarkerOptions options = new MarkerOptions().position(latlng[i]);
+                                            MarkerOptions options = new MarkerOptions().position(latlng[i]).title(locaStr[0]);
                                             marker[i] = mMap.addMarker(options);
                                         }
                                     }
