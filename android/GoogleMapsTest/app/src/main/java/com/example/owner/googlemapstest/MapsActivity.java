@@ -110,7 +110,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Boolean startLoginFlag = false;
     Boolean memberFlag = false;
     Boolean getLocationFlag = false;
-
+    Boolean firstLineFlag = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -437,117 +437,127 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String team_members[] = new String[256];
         @Override
         protected void onPostExecute(String result){ //自動的に呼ばれるので自分で呼び出さないこと！
-            if(flag)
-            if( startLoginFlag ){ //戻り値を利用する(login.phpを呼び出す)場合
-                startLoginFlag = false;
-                //        memberの取得用
-                memberFlag = true;
-                getstart("http://pbl.jp/td/getMembers/index.php?team_name=" + team_name);
-                if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
-                    _result = result;
-                    Log.d("login_result", _result);
-                    if(_result.contains("ok")){
-                        loginBtn.setText(team_name+": "+ id);
-                        Toast.makeText(MapsActivity.this, "login成功 ", Toast.LENGTH_LONG).show();
-                    }else {
-                        memberFlag = false;
-                        team_name = "";
-                        password = "";
-                        Toast.makeText(MapsActivity.this, "login失敗 ", Toast.LENGTH_LONG).show();
+            if(flag){
+                if( startLoginFlag ){ //戻り値を利用する(login.phpを呼び出す)場合
+                    startLoginFlag = false;
+                    //        memberの取得用
+                    memberFlag = true;
+                    getstart("http://pbl.jp/td/getMembers/index.php?team_name=" + team_name);
+                    if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                        _result = result;
+                        Log.d("login_result", _result);
+                        if(_result.contains("ok")){
+                            loginBtn.setText(team_name+": "+ id);
+                            Toast.makeText(MapsActivity.this, "login成功 ", Toast.LENGTH_LONG).show();
+                        }else {
+                            memberFlag = false;
+                            team_name = "";
+                            password = "";
+                            Toast.makeText(MapsActivity.this, "login失敗 ", Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
-            }
-            else if( memberFlag ) { //戻り値を利用する(getMembers.phpを呼び出す)場合
-                memberFlag = false;
-                getLocationFlag = true;
-                // statusView.setText(result);
-                if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
-                    _result = result;
-                    Log.d("getresult", _result);
+                else if( memberFlag ) { //戻り値を利用する(getMembers.phpを呼び出す)場合
+                    memberFlag = false;
+                    getLocationFlag = true;
+                    // statusView.setText(result);
+                    if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                        _result = result;
+                        Log.d("getresult", _result);
 
-                    String[] users = parse_json(_result);
-                    set_members(_result);
+                        String[] users = parse_json(_result);
+                        set_members(_result);
+                    }
                 }
-            }
-            else if( getLocationFlag ){ //戻り値を利用する(getloc.phpを呼び出す)場合
-                // statusView.setText(result);
-                if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
-                    _result = result;
-                    Log.d("_result", _result);
+                else if( getLocationFlag ) { //戻り値を利用する(getloc.phpを呼び出す)場合
+                    // statusView.setText(result);
+                    if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                        _result = result;
+                        Log.d("_result", _result);
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (int i = 0; i < idcnt; i++) {
-                                marker[i].remove();
-                                circle[i].remove();
-                            }
-                            String[] array = _result.split("\n");
-                            idcnt = array.length;
-                            if( idcnt > 1 ) idcnt --;;
-                            for (int i = 0; i < idcnt; i++) {
-                                String[] locaStr = array[i].split(",");
-                                latlng[i] = new LatLng(Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]));
-                                String _id = locaStr[0];
-                                String jikan = locaStr[2].substring(0, 2) + ":" + locaStr[2].substring(2, 4) + ":" + locaStr[2].substring(4);
-                                float[] results = new float[1];
-                                String kyori = "―";
-                                if (locaStr[0].equals(id)){
-                                    kyori = "自分";
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                for (int i = 0; i < idcnt; i++) {
+                                    marker[i].remove();
+                                    circle[i].remove();
                                 }
-                                else if( gpsService != null && gpsService.lat > 0 ) {
-                                    Location.distanceBetween(gpsService.lat, gpsService.lng,
-                                            Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]), results);
-                                    if (results != null && results.length > 0) {
-                                        kyori = "距離:"+String.valueOf((int) ((double) results[0] + 0.5)) + "m";
+                                String[] array = _result.split("\n");
+                                idcnt = array.length;
+                                if (idcnt > 1) idcnt--;
+                                ;
+                                for (int i = 0; i < idcnt; i++) {
+                                    String[] locaStr = array[i].split(",");
+                                    latlng[i] = new LatLng(Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]));
+                                    String _id = locaStr[0];
+                                    String jikan = locaStr[2].substring(0, 2) + ":" + locaStr[2].substring(2, 4) + ":" + locaStr[2].substring(4);
+                                    float[] results = new float[1];
+                                    String kyori = "―";
+                                    if (locaStr[0].equals(id)) {
+                                        kyori = "自分";
+                                    } else if (gpsService != null && gpsService.lat > 0) {
+                                        Location.distanceBetween(gpsService.lat, gpsService.lng,
+                                                Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]), results);
+                                        if (results != null && results.length > 0) {
+                                            kyori = "距離:" + String.valueOf((int) ((double) results[0] + 0.5)) + "m";
+                                        }
                                     }
+                                    Paint w_paint = new Paint();
+                                    w_paint.setAntiAlias(true);
+                                    w_paint.setColor(col[i % col.length]);
+                                    w_paint.setTextSize(60);
+                                    String txt = jikan + " " + _id + " " + kyori;
+                                    w_paint.getTextBounds(txt, 0, txt.length(), new Rect());
+                                    Paint.FontMetrics fm = w_paint.getFontMetrics();//フォントマトリックス
+                                    int mtw = (int) w_paint.measureText(txt);//幅
+                                    int fmHeight = (int) (Math.abs(fm.top) + fm.bottom);//高さ
+                                    Bitmap bmp = Bitmap.createBitmap(mtw, fmHeight, Bitmap.Config.ARGB_8888);
+                                    Canvas cv = new Canvas(bmp);
+
+    //自分の通った経路を表示
+                                    if (kyori.equals("自分")) {
+                                        if (firstLineFlag) {
+    //                                        スタート位置
+                                            MarkerOptions options = new MarkerOptions()
+                                                    .position(latlng[i])
+                                                    .title("スタート");
+                                            marker[i] = mMap.addMarker(options);
+                                            firstLineFlag = false;
+                                        } else {
+                                            PolylineOptions popt = new PolylineOptions();
+                                            popt.add(latlng[i - 1]); // 東京
+                                            popt.add(latlng[i]); // ロサンゼルス
+                                            popt.color(0x8000ffff);  //ARGBカラーを指定 (Aは透明度)
+                                            popt.width(20);
+                                            Polyline polyline = mMap.addPolyline(popt);
+                                        }
+                                    } else {
+                                        cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
+
+                                        //                                マーカー設置、条件でアイコン変更。
+                                        if (i < 5) {
+                                            MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test));
+                                            marker[i] = mMap.addMarker(options);
+                                        } else if (i == 5) {
+                                            MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test1));
+                                            marker[i] = mMap.addMarker(options);
+                                        }
+                                        //                              それ以外のときはデフォルト
+                                        else {
+                                            MarkerOptions options = new MarkerOptions().position(latlng[i]);
+                                            marker[i] = mMap.addMarker(options);
+                                        }
+                                    }
+
+                                    CircleOptions circleOptions = new CircleOptions().center(latlng[i]).radius(Float.valueOf(locaStr[6]))
+                                            .strokeColor(col[i % col.length]).strokeWidth(2.0f);
+                                    circle[i] = mMap.addCircle(circleOptions);
+    //                              circle削除
+                                    circle[i].remove();
                                 }
-                                Paint w_paint = new Paint();
-                                w_paint.setAntiAlias(true);
-                                w_paint.setColor(col[i % col.length]);
-                                w_paint.setTextSize(60);
-                                String txt = jikan + " " + _id + " " + kyori;
-                                w_paint.getTextBounds(txt, 0, txt.length(), new Rect());
-                                Paint.FontMetrics fm = w_paint.getFontMetrics();//フォントマトリックス
-                                int mtw = (int) w_paint.measureText(txt);//幅
-                                int fmHeight = (int) (Math.abs(fm.top) + fm.bottom);//高さ
-                                Bitmap bmp = Bitmap.createBitmap(mtw, fmHeight, Bitmap.Config.ARGB_8888);
-                                Canvas cv = new Canvas(bmp);
-                                if( kyori.equals("自分") ){
-                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromBitmap(bmp));
-                                    marker[i] = mMap.addMarker(options);
-                                }else {
-                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-                                }
-
-//                                cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-
-
-                                //                                マーカー設置、条件でアイコン変更。
-                                if (i < 5) {
-                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test));
-                                    marker[i] = mMap.addMarker(options);
-                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-                                } else if (i == 5) {
-                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test1));
-                                    marker[i] = mMap.addMarker(options);
-                                    cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-                                }
-//                              それ以外のときはデフォルト
-                                else {
-                                    MarkerOptions options = new MarkerOptions().position(latlng[i]);
-                                    marker[i] = mMap.addMarker(options);
-                                }
-
-
-                                CircleOptions circleOptions = new CircleOptions().center(latlng[i]).radius(Float.valueOf(locaStr[6]))
-                                        .strokeColor(col[i % col.length]).strokeWidth(2.0f);
-                                circle[i] = mMap.addCircle(circleOptions);
-//                              circle削除
-                                circle[i].remove();
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }
