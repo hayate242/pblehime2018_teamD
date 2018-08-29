@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.InputStream;
@@ -131,6 +132,7 @@ public class GPSService extends Service implements LocationListener {
     /* LocationListener Methods */
     @Override
     public void onLocationChanged(Location location) {
+        Log.d("onLocationChanged", "location");
         Calendar cal = Calendar.getInstance();
         // cal.setTimeInMillis(location.getTime());
         hour = cal.get(Calendar.HOUR_OF_DAY);
@@ -149,9 +151,11 @@ public class GPSService extends Service implements LocationListener {
         String time = "00000" + (hour * 10000 + minute * 100 + second);
         time = time.substring(time.length()-6);
 
-        Http ht = new Http("http://pbl.jp/now.php?" +
-                id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed + "," + results[0], false);
+        Http ht = new Http("http://pbl.jp/td/setLocation/index.php?" +
+                id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed, false);
         ht.execute();
+        Log.d("Get","http://pbl.jp/td/setLocation/index.php?" +
+                id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed);
 
         prev_lat = lat;
         prev_lng = lng;

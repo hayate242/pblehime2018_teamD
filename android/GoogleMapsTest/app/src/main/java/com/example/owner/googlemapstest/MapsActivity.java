@@ -103,6 +103,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Thread thread;
     String team_name = "";
     String password = "";
+    String members[] = new String[100];
     TextView membersText;
     Button loginBtn;
 
@@ -142,7 +143,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         File file = new File(this.getFilesDir(), "settings"); //ファイル名を指定
-        if( file.exists() ){ //すでにファイルが存在している場合
+//        if( file.exists() ){ //すでにファイルが存在している場合
+        if( false ){ //debug用
             try{
                 RandomAccessFile f = new RandomAccessFile(file, "r");
                 byte[] bytes = new byte[(int)f.length()];
@@ -266,7 +268,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             out.close();
         } catch (Exception e) {
         }
-        Toast.makeText(MapsActivity.this, "チーム名 " + team_name + "でログインを試みています", Toast.LENGTH_LONG).show();
 
         file = new File(MapsActivity.this.getFilesDir(), "password");
         try {
@@ -278,10 +279,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 //        login開始
         startLoginFlag = true;
-//        memberの取得用
-        memberFlag = true;
+        String geturl;
+        geturl = "http://pbl.jp/td/login/index.php?team_name=" + team_name + "&password=" + password + "&user_name=" + id;
+        getstart(geturl);
+
 
     }
+
+    private void getstart(String geturl) {
+        Http ht  = new Http(geturl, true);
+        Log.d("Get",geturl);
+        ht.execute();
+    }
+
 
     private void inputID() {
         final EditText editText = new EditText(MapsActivity.this);
@@ -337,6 +347,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMyLocationEnabled(true);
+        CameraPosition camerapos = new CameraPosition.Builder()
+                .target(new LatLng(33.845579, 132.765734)).zoom(15.5f).build();
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camerapos)); // 地図の中心の変更する
     }
 
     @Override
@@ -393,17 +407,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 //        jsonをぱーすしてStringに変換
         public String[] parse_json(String _result){
-            String data[] = new String[100];
             try {
                 JSONObject json = new JSONObject(_result);
                 Log.d("HTTP REQ", String.valueOf(json));
                 for( int i = 0; i < 100; i++ ){
-                    data[i] = json.getString("user"+i);
+                    members[i] = json.getString("user"+i);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            return data;
+            return members;
         }
 
         public void set_members(String _result){
@@ -424,8 +437,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String team_members[] = new String[256];
         @Override
         protected void onPostExecute(String result){ //自動的に呼ばれるので自分で呼び出さないこと！
+            if(flag)
             if( startLoginFlag ){ //戻り値を利用する(login.phpを呼び出す)場合
                 startLoginFlag = false;
+                //        memberの取得用
+                memberFlag = true;
+                getstart("http://pbl.jp/td/getMembers/index.php?team_name=" + team_name);
                 if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
                     _result = result;
                     Log.d("login_result", _result);
@@ -452,12 +469,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     set_members(_result);
                 }
             }
-
-
             else if( getLocationFlag ){ //戻り値を利用する(getloc.phpを呼び出す)場合
                 // statusView.setText(result);
                 if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
                     _result = result;
+                    Log.d("_result", _result);
 
                     runOnUiThread(new Runnable() {
                         @Override
@@ -496,11 +512,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 Bitmap bmp = Bitmap.createBitmap(mtw, fmHeight, Bitmap.Config.ARGB_8888);
                                 Canvas cv = new Canvas(bmp);
                                 cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-                                MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromBitmap(bmp));
-                                marker[i] = mMap.addMarker(options);
+                                //                                マーカー設置、条件でアイコン変更。
+                                if (i < 5) {
+                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test));
+                                    marker[i] = mMap.addMarker(options);
+                                } else if (i == 5) {
+                                    MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromResource(R.drawable.test1));
+                                    marker[i] = mMap.addMarker(options);
+
+                                }
+//                              それ以外のときはデフォルト
+                                else {
+                                    MarkerOptions options = new MarkerOptions().position(latlng[i]);
+                                    marker[i] = mMap.addMarker(options);
+                                }
+
+
                                 CircleOptions circleOptions = new CircleOptions().center(latlng[i]).radius(Float.valueOf(locaStr[6]))
                                         .strokeColor(col[i % col.length]).strokeWidth(2.0f);
                                 circle[i] = mMap.addCircle(circleOptions);
+//                              circle削除
+                                circle[i].remove();
                             }
                         }
                     });
@@ -514,18 +546,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             result = "";
             String geturl = "";
             Http ht;
-//            default
-//            Http ht  = new Http("http://pbl.jp/getloc.php", true);
 
-            if ( startLoginFlag ) {
-                geturl = "http://pbl.jp/td/login/index.php?team_name=" + team_name + "&password=" + password;
-                Log.d("Get",geturl);
-            }
-            else if ( memberFlag ){
-                geturl = "http://pbl.jp/td/getMembers/index.php?team_name=" + team_name;
-                Log.d("Get",geturl);
-            }else if(getLocationFlag) {
-                geturl = "http://pbl.jp/getloc.php";
+            if(getLocationFlag) {
+//                geturl = "http://pbl.jp/td/getLocation/index.php?user_names=";
+                geturl = "http://pbl.jp/getloc.php?team_name="+ team_name;
                 Log.d("Get",geturl);
             }
             ht  = new Http(geturl, true);

@@ -23,16 +23,18 @@
         android:gravity="bottom"
         tools:context=".MainActivity">
 
-        <!-- ボタン -->
+        <!-- members -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@android:color/black"
-            android:text="Hello"
+            android:text="members"
             android:textColor="@android:color/white"
             android:padding="30dp"
+            android:textSize="20sp"
             android:id="@+id/membersText"/>
 
+    </LinearLayout>
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
@@ -42,13 +44,13 @@
         tools:context=".MainActivity">
 
         <!--<com.example.owner.googlemapstest.AlphaButton-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:background="@android:color/black"-->
-            <!--android:text="login"-->
-            <!--android:textColor="@android:color/white"-->
-            <!--android:padding="30dp"-->
-            <!--android:id="@+id/loginBtn"/>-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:background="@android:color/black"-->
+        <!--android:text="login"-->
+        <!--android:textColor="@android:color/white"-->
+        <!--android:padding="30dp"-->
+        <!--android:id="@+id/loginBtn"/>-->
 
         <Button
             android:id="@+id/loginBtn"
@@ -59,8 +61,6 @@
             android:layout_height="wrap_content"
             android:text="login"
             />
-
-    </LinearLayout>
 
     </LinearLayout>
 
