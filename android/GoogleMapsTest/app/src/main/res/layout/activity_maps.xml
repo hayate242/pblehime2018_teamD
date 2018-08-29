@@ -27,18 +27,40 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/black"
             android:text="Hello"
             android:textColor="@android:color/white"
-            android:background="@android:color/black"
-            android:padding="30dp"/>
-        <TextView
+            android:padding="30dp"
+            android:id="@+id/membersText"/>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="right"
+        tools:context=".MainActivity">
+
+        <!--<com.example.owner.googlemapstest.AlphaButton-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:background="@android:color/black"-->
+            <!--android:text="login"-->
+            <!--android:textColor="@android:color/white"-->
+            <!--android:padding="30dp"-->
+            <!--android:id="@+id/loginBtn"/>-->
+
+        <Button
+            android:id="@+id/loginBtn"
+            android:padding="30dp"
+            android:background="@android:color/holo_green_light"
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:color/black"
-            android:text="Hello"
-            android:textColor="@android:color/white"
-            android:padding="50dp"
-            android:id="@+id/membersText"/>
+            android:text="login"
+            />
+
+    </LinearLayout>
 
     </LinearLayout>
 

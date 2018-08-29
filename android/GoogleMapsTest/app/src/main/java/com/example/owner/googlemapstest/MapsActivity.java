@@ -26,7 +26,10 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,7 +79,6 @@ import java.util.Iterator;
 
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -99,8 +101,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     GPSService gpsService = null;
     Intent serviceIntent;
     private Thread thread;
-    String team_name = "test_team";
+    String team_name = "";
+    String password = "";
     TextView membersText;
+    Button loginBtn;
+
+    Boolean startLoginFlag = false;
+    Boolean memberFlag = false;
+    Boolean getLocationFlag = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +119,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        text設定
         membersText = (TextView) findViewById(R.id.membersText);
         membersText.setMovementMethod(ScrollingMovementMethod.getInstance());
+
+//        login Button
+        loginBtn = (Button)findViewById(R.id.loginBtn);
+        loginBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                login();
+            }
+        });
 
         serviceIntent = new Intent(this, GPSService.class);
         startService(serviceIntent);
@@ -137,6 +155,132 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }else{
             inputID();
         }
+        checkLogin("login");
+    }
+
+    private void checkLogin( String fileneame) {
+        File file = new File(this.getFilesDir(), fileneame); //ファイル名を指定
+        if( file.exists() ){ //すでにファイルが存在している場合
+            try{
+                RandomAccessFile f = new RandomAccessFile(file, "r");
+                byte[] bytes = new byte[(int)f.length()];
+                f.readFully(bytes);
+                f.close();
+                String[] array = new String(bytes).split(","); // , で分割する(拡張性を考慮)
+                id = array[0];
+            } catch (Exception e) {}
+            Toast.makeText(this, "あなたのIDは " + id, Toast.LENGTH_SHORT).show();
+        }else{
+            login();
+        }
+    }
+
+
+    private void login(){
+        final EditText editText = new EditText(MapsActivity.this);
+        InputFilter inputFilter = new InputFilter() {
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+                if (source.toString().matches("^[0-9a-zA-Z._-]+$")) { //半角英数字と._-に限定する
+                    return source;
+                } else {
+                    return "";
+                }
+            }
+        };
+        // フィルターの配列を作成しセットする
+        InputFilter[] filters = new InputFilter[]{inputFilter};
+        editText.setFilters(filters);
+        editText.setText(team_name);
+
+        new AlertDialog.Builder(MapsActivity.this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("チーム名を入力してください")
+                .setView(editText)  //setViewにてビューを設定
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        team_name = editText.getText().toString();
+                        if( team_name.length() == 0 ) team_name = "none";
+//                        File file = new File(MapsActivity.this.getFilesDir(), "team_name");
+//                        try {
+//                            FileOutputStream out = new FileOutputStream(file);
+//                            out.write((team_name + ",").getBytes());
+//                            out.close();
+//                        } catch (Exception e) {
+//                        }
+//                        Toast.makeText(MapsActivity.this, "あなたのチーム名は " + team_name, Toast.LENGTH_LONG).show();
+                        input_password();
+                    }
+                })
+                .setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
+    }
+
+    private void input_password() {
+        final EditText editText = new EditText(MapsActivity.this);
+        InputFilter inputFilter = new InputFilter() {
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+                if (source.toString().matches("^[0-9a-zA-Z._-]+$")) { //半角英数字と._-に限定する
+                    return source;
+                } else {
+                    return "";
+                }
+            }
+        };
+        // フィルターの配列を作成しセットする
+        InputFilter[] filters = new InputFilter[]{inputFilter};
+        editText.setFilters(filters);
+        editText.setText(password);
+
+        new AlertDialog.Builder(MapsActivity.this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("パスワードを入力してください")
+                .setView(editText)  //setViewにてビューを設定
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        password = editText.getText().toString();
+                        if( password.length() == 0 ) password = "none";
+
+                        http_login();
+                    }
+                })
+                .setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
+    }
+
+
+    private void http_login() {
+        Log.d("team_name", team_name);
+        Log.d("password", password);
+        File file = new File(MapsActivity.this.getFilesDir(), "team_name");
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            out.write((team_name + ",").getBytes());
+            out.close();
+        } catch (Exception e) {
+        }
+        Toast.makeText(MapsActivity.this, "チーム名 " + team_name + "でログインを試みています", Toast.LENGTH_LONG).show();
+
+        file = new File(MapsActivity.this.getFilesDir(), "password");
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            out.write((password + ",").getBytes());
+            out.close();
+        } catch (Exception e) {
+        }
+
+//        login開始
+        startLoginFlag = true;
+//        memberの取得用
+        memberFlag = true;
+
     }
 
     private void inputID() {
@@ -209,6 +353,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onPause();
     }
 
+
+
     public class Http extends AsyncTask<String, String, String> {
         private URL url;
         private Boolean flag;
@@ -266,29 +412,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 JSONObject json = new JSONObject(_result);
                 for( int i = 0; i < 100; i++ ){
                     members += json.getString("user"+i);
-                    members += ",";
+                    members += " ";
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            membersText.setText(members);
+            membersText.setText(team_name + "のメンバー: " + members);
         }
 
         String _result;
         String team_members[] = new String[256];
         @Override
         protected void onPostExecute(String result){ //自動的に呼ばれるので自分で呼び出さないこと！
-            if( flag ){ //戻り値を利用する(getloc.phpを呼び出す)場合
+            if( startLoginFlag ){ //戻り値を利用する(login.phpを呼び出す)場合
+                startLoginFlag = false;
+                if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                    _result = result;
+                    Log.d("login_result", _result);
+                    if(_result.contains("ok")){
+                        loginBtn.setText(team_name+": "+ id);
+                        Toast.makeText(MapsActivity.this, "login成功 ", Toast.LENGTH_LONG).show();
+                    }else {
+                        memberFlag = false;
+                        team_name = "";
+                        password = "";
+                        Toast.makeText(MapsActivity.this, "login失敗 ", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+            else if( memberFlag ) { //戻り値を利用する(getMembers.phpを呼び出す)場合
+                memberFlag = false;
+                getLocationFlag = true;
                 // statusView.setText(result);
-                if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                if (result.length() > 0) { // 通信失敗時は result が "" となり、split でエラーになるので回避
                     _result = result;
                     Log.d("getresult", _result);
 
                     String[] users = parse_json(_result);
                     set_members(_result);
-//                    Log.d("parsed_string", users[3]);
+                }
+            }
 
-                    /*runOnUiThread(new Runnable() {
+
+            else if( getLocationFlag ){ //戻り値を利用する(getloc.phpを呼び出す)場合
+                // statusView.setText(result);
+                if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
+                    _result = result;
+
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             for (int i = 0; i < idcnt; i++) {
@@ -332,7 +503,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 circle[i] = mMap.addCircle(circleOptions);
                             }
                         }
-                    });*/
+                    });
                 }
             }
         }
@@ -341,9 +512,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void run() {
         while( thread != null ) {
             result = "";
+            String geturl = "";
+            Http ht;
+//            default
 //            Http ht  = new Http("http://pbl.jp/getloc.php", true);
-            String geturl = "http://pbl.jp/td/getMembers/index.php?team_name=" + team_name;
-            Http ht  = new Http(geturl, true);
+
+            if ( startLoginFlag ) {
+                geturl = "http://pbl.jp/td/login/index.php?team_name=" + team_name + "&password=" + password;
+                Log.d("Get",geturl);
+            }
+            else if ( memberFlag ){
+                geturl = "http://pbl.jp/td/getMembers/index.php?team_name=" + team_name;
+                Log.d("Get",geturl);
+            }else if(getLocationFlag) {
+                geturl = "http://pbl.jp/getloc.php";
+                Log.d("Get",geturl);
+            }
+            ht  = new Http(geturl, true);
+            Log.d("Get",geturl);
             ht.execute();
             try{
                 Thread.sleep(5000);
@@ -353,7 +539,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // 位置情報許可の確認
     public void checkPermission() {
         if(  ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
-            // 許可されているときの処理は特になし
+            // 許可されているときの処理 locationManager登録
+
         }else{ // 拒否していた場合は許可を求める
             if( ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ){
                 ActivityCompat.requestPermissions(MapsActivity.this,
@@ -364,6 +551,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
+
+
 
     // 結果の受け取り
     @Override
