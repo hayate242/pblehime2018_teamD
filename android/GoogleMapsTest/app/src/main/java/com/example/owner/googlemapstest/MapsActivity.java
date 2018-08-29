@@ -94,7 +94,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String id = "";
     private Marker[] marker = new Marker[50];
     private LatLng[] latlng = new LatLng[50];
-    private Circle[] circle = new Circle[50];
     int[] col = {0xff0000ff,0xff00a000,0xffff0000,0xff00ffff,0xffff00ff,0xffa0a000,0xff00ff00,0xff00a0ff,0xff8080ff,0xff666666,0xffff80ff};
     private int idcnt = 0;
     String result;
@@ -478,14 +477,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                for (int i = 0; i < idcnt; i++) {
-                                    marker[i].remove();
-                                    circle[i].remove();
-                                }
+//                                for (int i = 0; i < idcnt; i++) {
+//                                    marker[i].remove();
+//                                }
                                 String[] array = _result.split("\n");
                                 idcnt = array.length;
                                 if (idcnt > 1) idcnt--;
-                                ;
+
                                 for (int i = 0; i < idcnt; i++) {
                                     String[] locaStr = array[i].split(",");
                                     latlng[i] = new LatLng(Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]));
@@ -525,9 +523,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             firstLineFlag = false;
                                         } else {
                                             PolylineOptions popt = new PolylineOptions();
-                                            popt.add(latlng[i - 1]); // 東京
-                                            popt.add(latlng[i]); // ロサンゼルス
-                                            popt.color(0x8000ffff);  //ARGBカラーを指定 (Aは透明度)
+                                            popt.add(latlng[i - 1]); // ひとつ前の緯度経度
+                                            popt.add(latlng[i]); // 今の緯度経度
+                                            popt.color(0x8000B3FD);  //ARGBカラーを指定 (Aは透明度)
                                             popt.width(20);
                                             Polyline polyline = mMap.addPolyline(popt);
                                         }
@@ -548,12 +546,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             marker[i] = mMap.addMarker(options);
                                         }
                                     }
-
-                                    CircleOptions circleOptions = new CircleOptions().center(latlng[i]).radius(Float.valueOf(locaStr[6]))
-                                            .strokeColor(col[i % col.length]).strokeWidth(2.0f);
-                                    circle[i] = mMap.addCircle(circleOptions);
-    //                              circle削除
-                                    circle[i].remove();
                                 }
                             }
                         });
