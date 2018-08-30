@@ -126,7 +126,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     static Boolean onLocationChangedFlag = true;
     static String firstLocationChangedTime = "";
 
-    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -420,7 +419,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     static ArrayList<Double> datalng = new ArrayList<Double>();
     static double  dis = 0.0;
 
-    public static double latlngcreate(double a, double n) {
+    public static double latlngcreate(double a, double n, double cal) {
         if(onLocationChangedFlag){
             firstLocationChangedTime = getNowTime();
             onLocationChangedFlag = false;
@@ -458,18 +457,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         dis += distance[0];
 
-        change_status(dis/10000000.0);
+        change_status(dis/10000000.0, cal);
         Log.d("distance", String.valueOf(dis));
 
         return dis;
     }
 
-    private static void change_status(double dis) {
+    private static void change_status(double dis, double cal) {
 
         if( dis >= 1000 ){
-            statusTextView.setText(String.format("走行距離：%.3f km", dis/1000.0));
+            statusTextView.setText(String.format("走行距離：%.3f km, 消費カロリー:%.3f kcal", dis/1000.0, cal));
         }else {
-            statusTextView.setText(String.format("走行距離：%.3f m", dis));
+            statusTextView.setText(String.format("走行距離：%.3f m, 消費カロリー:%.3f kcal", dis, cal));
         }
     }
 

@@ -21,7 +21,10 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 public class GPSService extends Service implements LocationListener {
@@ -35,6 +38,11 @@ public class GPSService extends Service implements LocationListener {
     float speed, bearing;
     private LocationManager manager;
     private final IBinder binder = new GPSServiceBinder();
+    int firstLocationChangedHour = 0;
+    int firstLocationChangedMin = 0;
+    int firstLocationChangedsec = 0;
+
+    Boolean firstLocationChangedFlag = true;
 
     /* Service Setup Methods */
     @Override
@@ -134,11 +142,31 @@ public class GPSService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * 現在日時をyyyy/MM/dd HH:mm:ss形式で取得する.<br>
+     */
+    public void getNowTime(){
+        String temp = "";
+//        final DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        final DateFormat df = new SimpleDateFormat("HHmmss");
+        final Date date = new Date(System.currentTimeMillis());
+        Log.d("currentTime", String.valueOf(date));
+        temp = df.format(date);
+        firstLocationChangedHour = Integer.parseInt(temp.substring(0,2));
+        firstLocationChangedMin = Integer.parseInt(temp.substring(2,4));
+        firstLocationChangedsec = Integer.parseInt(temp.substring(4,6));
+    }
+
 
     /* LocationListener Methods */
     @Override
     public void onLocationChanged(Location location) {
         Log.d("onLocationChanged", "location");
+
+        if(firstLocationChangedFlag){
+            getNowTime();
+            firstLocationChangedFlag = false;
+        }
         Calendar cal = Calendar.getInstance();
         // cal.setTimeInMillis(location.getTime());
         hour = cal.get(Calendar.HOUR_OF_DAY);
@@ -165,8 +193,17 @@ public class GPSService extends Service implements LocationListener {
                     id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed);
         }
 
+        int sh = hour - firstLocationChangedHour;
+        int sm = minute - firstLocationChangedMin;
+        int ss = second - firstLocationChangedsec;
+
+        double calory = 8*(sh+(double)sm/(double)60+(double)ss/(double)3600)*1.05*60;
+
 //        統計情報を追加
-        double dist = MapsActivity.latlngcreate(lat,lng);
+        double dist = MapsActivity.latlngcreate(lat,lng,calory);
+
+
+
 
 
         prev_lat = lat;
