@@ -58,6 +58,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -97,7 +98,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.OnPolylineClickListener,
         GoogleMap.OnPolygonClickListener  {
 
-    private GoogleMap mMap;
+    static GoogleMap mMap;
     private final int REQUEST_PERMISSION = 1000;
     static String id = "";
     private Marker[] marker = new Marker[50000];
@@ -114,6 +115,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     TextView membersText;
     Button loginBtn;
     Button idBtn;
+    static TextView statusTextView;
 
     Boolean startLoginFlag = false;
     Boolean memberFlag = false;
@@ -128,6 +130,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        text設定
         membersText = (TextView) findViewById(R.id.membersText);
         membersText.setMovementMethod(ScrollingMovementMethod.getInstance());
+        statusTextView = (TextView) findViewById(R.id.statusTextView);
+        statusTextView.setMovementMethod(ScrollingMovementMethod.getInstance());
+
 
 //        login Button
         loginBtn = (Button)findViewById(R.id.loginBtn);
@@ -399,6 +404,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onPolygonClick(Polygon polygon) {
 
+    }
+
+//    統計情報表示
+    static ArrayList<Double> datalat = new ArrayList<Double>();
+    static ArrayList<Double> datalng = new ArrayList<Double>();
+    public static double latlngcreate(double a, double n) {
+        datalat.add(a);
+        datalng.add(n);
+        double  dis = 0.0;
+        float[] distance = new float[2];
+        /*Marker marker;
+        MarkerOptions options = new MarkerOptions()
+                .position(new LatLng(a, n))
+                .title("1");
+        marker = mMap.addMarker(options);*/   //確認のためにマーカー設置していた
+        double[] array1 = new double[datalat.size()];
+        double[] array2 = new double[datalng.size()];
+
+        for (int i = 0; i < datalat.size(); i++) {
+            array1[i ] = datalat.get(i);
+            array2[i ] = datalng.get(i);
+        }
+
+        if(datalat.size()>0){
+            for(int i=1;i<datalat.size();i++){
+                PolylineOptions popt = new PolylineOptions();
+                popt.add(new LatLng(array1[i-1], array2[i - 1]));
+                popt.add(new LatLng(array1[i], array2[i]));
+                popt.color(0x80ff440D);
+                popt.width(10);
+                Polyline polyline = mMap.addPolyline(popt);   //移動した緯度経度を地図上に表示
+            }
+
+        }
+        for (int i = 1; i < datalat.size(); i++) {
+           /* double t = Math.toRadians(array1[i] - array1[i-1]);
+            double g = Math.toRadians(array2[i] - array2[i-1]);
+            double A = Math.sin(t / 2) * Math.sin(t / 2) + Math.cos(Math.toRadians(array1[i-1])) * Math.cos(Math.toRadians(array1[i])) * Math.sin(g / 2) * Math.sin(g / 2);
+            double C = 2 * Math.atan2(Math.sqrt(A), Math.sqrt(1 - A));
+            double decimalNo = Math.pow(10, 10);
+            double D = r * C;
+            D = Math.round(decimalNo * distance / 1) / decimalNo;*/
+
+            Location.distanceBetween(array1[i - 1], array1[i], array2[i - 1], array2[i], distance); //緯度経度から移動距離計算
+
+            dis += distance[0];
+        }
+        change_status(dis);
+
+        return dis;
+    }
+
+    private static void change_status(double dis) {
+
+        statusTextView.setText(String.format("走行距離：%s", dis));
     }
 
 

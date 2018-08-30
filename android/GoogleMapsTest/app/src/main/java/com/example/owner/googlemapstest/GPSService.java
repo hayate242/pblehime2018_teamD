@@ -12,6 +12,8 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -20,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
+import java.util.Map;
 
 public class GPSService extends Service implements LocationListener {
     String id = "";
@@ -161,6 +164,10 @@ public class GPSService extends Service implements LocationListener {
             Log.d("Get","http://pbl.jp/td/setLocation/index.php?" +
                     id + "," + time + "," + lat + ","  + lng + "," + alt+ "," + acc + "," + speed);
         }
+
+//        統計情報を追加
+        double dist = MapsActivity.latlngcreate(lat,lng);
+
 
         prev_lat = lat;
         prev_lng = lng;
