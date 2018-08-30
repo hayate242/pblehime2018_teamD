@@ -57,7 +57,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -80,6 +83,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -94,9 +98,7 @@ import org.json.JSONObject;
 *
 * serviceを使ってバックグラウンド実行
 * */
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, Runnable,
-        GoogleMap.OnPolylineClickListener,
-        GoogleMap.OnPolygonClickListener  {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, Runnable  {
 
     static GoogleMap mMap;
     private final int REQUEST_PERMISSION = 1000;
@@ -121,6 +123,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Boolean memberFlag = false;
     Boolean getLocationFlag = false;
     Boolean firstLineFlag = true;
+    static Boolean onLocationChangedFlag = true;
+    static String firstLocationChangedTime = "";
+
+    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +153,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 inputID();
+            }
+        });
+//        救援信号ボタン
+        Button button = (Button) findViewById(R.id.helpBtn);
+        button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MapsActivity.this, HelpEntryform.class);
+                startActivity (intent);
             }
         });
 
@@ -372,19 +387,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .target(new LatLng(33.845579, 132.765734)).zoom(15.5f).build();
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camerapos)); //
 
-        // Add a polyline to the map.
-        Polyline polyline1 = googleMap.addPolyline((new PolylineOptions())
-                .clickable(true)
-                .add(new LatLng(-35.016, 143.321),
-                        new LatLng(-34.747, 145.592),
-                        new LatLng(-34.364, 147.891),
-                        new LatLng(-33.501, 150.217),
-                        new LatLng(-32.306, 149.248),
-                        new LatLng(-32.491, 147.309)));
 
-        // Set listeners for click events.
-        googleMap.setOnPolylineClickListener(this);
-        googleMap.setOnPolygonClickListener(this);
     }
 
     @Override
@@ -401,9 +404,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onPause();
     }
 
-    @Override
-    public void onPolygonClick(Polygon polygon) {
-
+    /**
+     * 現在日時をyyyy/MM/dd HH:mm:ss形式で取得する.<br>
+     */
+    public static String getNowTime(){
+//        final DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        final DateFormat df = new SimpleDateFormat("HHmmss");
+        final Date date = new Date(System.currentTimeMillis());
+        Log.d("currentTime", String.valueOf(date));
+        return df.format(date);
     }
 
 //    統計情報表示
@@ -412,6 +421,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     static double  dis = 0.0;
 
     public static double latlngcreate(double a, double n) {
+        if(onLocationChangedFlag){
+            firstLocationChangedTime = getNowTime();
+            onLocationChangedFlag = false;
+        }
         datalat.add(a);
         datalng.add(n);
         float[] distance = new float[2];
@@ -525,6 +538,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             membersText.setText(team_name + "のメンバー: " + members);
         }
 
+
         String _result;
         String team_members[] = new String[256];
         @Override
@@ -618,8 +632,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             PolylineOptions popt = new PolylineOptions();
                                             popt.add(latlng[i - 1]); // ひとつ前の緯度経度
                                             popt.add(latlng[i]); // 今の緯度経度
-                                            popt.color(0xFF00B3FD);  //ARGBカラーを指定 (Aは透明度)
-                                            popt.width(15);
+
+
+                                            if( firstLocationChangedTime.isEmpty() == false ){
+                                                if( Integer.parseInt(locaStr[2]) > Integer.parseInt(firstLocationChangedTime) ){
+                                                    popt.color(0x80ff440D);//ARGBカラーを指定 (Aは透明度)（起動以降の移動履歴）
+                                                }else {
+                                                    popt.color(0xFF00B3FD);  //ARGBカラーを指定 (Aは透明度)（過去の移動履歴）
+                                                }
+                                            }else {
+                                                popt.color(0xFF00B3FD);  //ARGBカラーを指定 (Aは透明度)（過去の移動履歴）
+                                            }
+                                            popt.width(10);
 
                                             Polyline polyline = mMap.addPolyline(popt);
 
@@ -694,29 +718,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-/*
-*
-* polyline
-* */
-    private static final int PATTERN_GAP_LENGTH_PX = 20;
-    private static final PatternItem DOT = new Dot();
-    private static final PatternItem GAP = new Gap(PATTERN_GAP_LENGTH_PX);
-    //
-// Create a stroke pattern of a gap followed by a dot.
-    private static final List<PatternItem> PATTERN_POLYLINE_DOTTED = Arrays.asList(GAP, DOT);
-    @Override
-    public void onPolylineClick(Polyline polyline) {
-        // Flip from solid stroke to dotted stroke pattern.
-        if ((polyline.getPattern() == null) || (!polyline.getPattern().contains(DOT))) {
-            polyline.setPattern(PATTERN_POLYLINE_DOTTED);
-        } else {
-            // The default pattern is a solid stroke.
-            polyline.setPattern(null);
-        }
 
-        Toast.makeText(this, "Route type " + polyline.getTag().toString(),
-                Toast.LENGTH_SHORT).show();
-    }
 
 
 
@@ -744,301 +746,3 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 }
-
-/*
-*
-*
-* GPS応用編
-* */
-//public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, Runnable  {
-//
-//    private GoogleMap mMap;
-//    private final int REQUEST_PERMISSION = 1000;
-//    String id = "";
-//    private Marker[] marker = new Marker[50];
-//    private String[] markertitle = new String[50];  // ★★★この1行追加
-//    private LatLng[] latlng = new LatLng[50];
-//    private Circle[] circle = new Circle[50];
-//    int[] col = {0xff0000ff,0xff00a000,0xffff0000,0xff00ffff,0xffff00ff,0xffa0a000,0xff00ff00,0xff00a0ff,0xff8080ff,0xff666666,0xffff80ff};
-//    private int idcnt = 0;
-//    String result;
-//    GPSService gpsService = null;
-//    Intent serviceIntent;
-//    private Thread thread;
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_maps);
-//
-//        serviceIntent = new Intent(this, GPSService.class);
-//        startService(serviceIntent);
-//
-//        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.map);
-//        mapFragment.getMapAsync(this);
-//
-//        if( Build.VERSION.SDK_INT >= 23 ){  // Android 6, API 23以上でパーミッシンの確認
-//            checkPermission();
-//        }
-//
-//        File file = new File(this.getFilesDir(), "settings"); //ファイル名を指定
-//        if( file.exists() ){ //すでにファイルが存在している場合
-//            try{
-//                RandomAccessFile f = new RandomAccessFile(file, "r");
-//                byte[] bytes = new byte[(int)f.length()];
-//                f.readFully(bytes);
-//                f.close();
-//                String[] array = new String(bytes).split(","); // , で分割する(拡張性を考慮)
-//                id = array[0];
-//            } catch (Exception e) {}
-//            Toast.makeText(this, "あなたのIDは " + id, Toast.LENGTH_SHORT).show();
-//        }else{
-//            inputID();
-//        }
-//    }
-//
-//    private void inputID() {
-//        final EditText editText = new EditText(MapsActivity.this);
-//        InputFilter inputFilter = new InputFilter() {
-//            @Override
-//            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
-//                if (source.toString().matches("^[0-9a-zA-Z._-]+$")) { //半角英数字と._-に限定する
-//                    return source;
-//                } else {
-//                    return "";
-//                }
-//            }
-//        };
-//        // フィルターの配列を作成しセットする
-//        InputFilter[] filters = new InputFilter[]{inputFilter};
-//        editText.setFilters(filters);
-//        editText.setText(id);
-//
-//        new AlertDialog.Builder(MapsActivity.this)
-//                .setIcon(android.R.drawable.ic_dialog_info)
-//                .setTitle("IDを入力してください")
-//                .setView(editText)  //setViewにてビューを設定
-//                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int whichButton) {
-//                        id = editText.getText().toString();
-//                        if( id.length() == 0 ) id = "none";
-//                        File file = new File(MapsActivity.this.getFilesDir(), "settings");
-//                        try {
-//                            FileOutputStream out = new FileOutputStream(file);
-//                            out.write((id + ",").getBytes());
-//                            out.close();
-//                        } catch (Exception e) {
-//                        }
-//                        Toast.makeText(MapsActivity.this, "あなたのIDは " + id, Toast.LENGTH_LONG).show();
-//                    }
-//                })
-//                .setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int whichButton) {
-//                    }
-//                })
-//                .show();
-//    }
-//
-//    /**
-//     * Manipulates the map once available.
-//     * This callback is triggered when the map is ready to be used.
-//     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-//     * we just add a marker near Sydney, Australia.
-//     * If Google Play services is not installed on the device, the user will be prompted to install
-//     * it inside the SupportMapFragment. This method will only be triggered once the user has
-//     * installed Google Play services and returned to the app.
-//     */
-//    @Override
-//    public void onMapReady(GoogleMap googleMap) {
-//        mMap = googleMap;
-//        // タップ時のイベントハンドラ登録
-//        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-//            @Override
-//            public void onMapClick(LatLng point) {
-//                Intent intent = new Intent();
-//                intent.setAction(Intent.ACTION_VIEW);
-//                intent.setClassName("com.google.android.apps.maps","com.google.android.maps.MapsActivity");
-//                intent.setData(Uri.parse("http://maps.google.com/maps?saddr="+gpsService.lat+","+gpsService.lng+"&daddr="+point.latitude+","+point.longitude));
-//                startActivity(intent);
-//            }
-//        });
-//        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-//            @Override
-//            public boolean onMarkerClick(Marker _marker) {
-//                Toast.makeText(getApplicationContext(), "マーカータップ", Toast.LENGTH_LONG).show();
-//                for(int i=0;i<idcnt;i++){
-//                    if( _marker.equals(marker[i]) ) {
-//                        Calendar cal = Calendar.getInstance();    // 今日の日付（例：20160807） の文字列を生成するルーチン
-//                        int yyyy = cal.get(Calendar.YEAR);
-//                        int mm = cal.get(Calendar.MONTH) + 1;  // 0から11の範囲になる
-//                        int dd = cal.get(Calendar.DAY_OF_MONTH);
-//                        String yyyymmdd = "" + (yyyy * 10000 + mm * 100 + dd);
-//                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://pbl.jp/log/" + yyyymmdd + "/" + markertitle[i]));
-//                        startActivity(intent);
-//                        break;
-//                    }
-//                }
-//                return false;
-//            }
-//        });
-//    }
-//
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-//        thread = new Thread(this);  // ← ★★★ この2行を追加してください ★★★
-//        thread.start();              // ← ★★★ この2行を追加してください ★★★
-//    }
-//
-//    protected void onPause() {
-//        unbindService(serviceConnection);
-//        thread = null; // ← ★★★ この1行を追加してください ★★★
-//        super.onPause();
-//    }
-//
-//    public class Http extends AsyncTask<String, String, String> {
-//        private URL url;
-//        private int flag;
-//        public Http(String urltext, int flag) {
-//            try{
-//                this.url = new URL(urltext);
-//            }
-//            catch(Exception e){}
-//            this.flag = flag;
-//        }
-//        @Override
-//        public String doInBackground(String...params) {
-//            String t = "";
-//            try{
-//                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-//                con.setRequestMethod("GET");
-//                con.setInstanceFollowRedirects(false);
-//                con.setRequestProperty("Accept-Language", "jp");
-//                con.connect();
-//
-//                InputStream in = con.getInputStream();
-//                byte bodyByte[] = new byte[024000];
-//                int len, readPos = 0;
-//                while(true){
-//                    len=in.read(bodyByte, readPos, 1024000 - readPos);
-//                    if( len < 0 ) break;
-//                    readPos += len;
-//                }
-//                in.close();
-//                con.disconnect();
-//                t = new String(bodyByte, "UTF-8");
-//            }
-//            catch(Exception e){}
-//            return t;
-//        }
-//
-//        String _result;
-//        @Override
-//        protected void onPostExecute(String result){ //自動的に呼ばれるので自分で呼び出さないこと！
-//            if( flag==1 ){ //戻り値を利用する(getloc.phpを呼び出す)場合
-//                // statusView.setText(result);
-//                if( result.length() > 0 ) { // 通信失敗時は result が "" となり、split でエラーになるので回避
-//                    _result = result;
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            for (int i = 0; i < idcnt; i++) {
-//                                marker[i].remove();
-//                                circle[i].remove();
-//                            }
-//                            String[] array = _result.split("\n");
-//                            idcnt = array.length;
-//                            if( idcnt > 1 ) idcnt --;;
-//                            for (int i = 0; i < idcnt; i++) {
-//                                String[] locaStr = array[i].split(",");
-//                                latlng[i] = new LatLng(Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]));
-//                                String _id = locaStr[0];
-//                                String jikan = locaStr[2].substring(0, 2) + ":" + locaStr[2].substring(2, 4) + ":" + locaStr[2].substring(4);
-//                                float[] results = new float[1];
-//                                String kyori = "―";
-//                                if( _id.equals(id) ) kyori = "自分";
-//                                else if( gpsService != null && gpsService.lat > 0 ) {
-//                                    Location.distanceBetween(gpsService.lat, gpsService.lng,
-//                                            Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]), results);
-//                                    if (results != null && results.length > 0) {
-//                                        kyori = String.valueOf((int) ((double) results[0] + 0.5)) + "m";
-//                                    }
-//                                }
-//                                Paint w_paint = new Paint();
-//                                w_paint.setAntiAlias(true);
-//                                w_paint.setColor(col[i % col.length]);
-//                                w_paint.setTextSize(32);
-//                                String txt = jikan + " " + _id + " " + kyori;
-//                                w_paint.getTextBounds(txt, 0, txt.length(), new Rect());
-//                                Paint.FontMetrics fm = w_paint.getFontMetrics();//フォントマトリックス
-//                                int mtw = (int) w_paint.measureText(txt);//幅
-//                                int fmHeight = (int) (Math.abs(fm.top) + fm.bottom);//高さ
-//                                Bitmap bmp = Bitmap.createBitmap(mtw, fmHeight, Bitmap.Config.ARGB_8888);
-//                                Canvas cv = new Canvas(bmp);
-//                                cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
-//                                MarkerOptions options = new MarkerOptions().position(latlng[i]).icon(BitmapDescriptorFactory.fromBitmap(bmp));
-//                                marker[i] = mMap.addMarker(options);
-//                                markertitle[i] = _id;                 // ★★★この1行追加
-//                                CircleOptions circleOptions = new CircleOptions().center(latlng[i]).radius(Float.valueOf(locaStr[6]))
-//                                        .strokeColor(col[i % col.length]).strokeWidth(2.0f);
-//                                circle[i] = mMap.addCircle(circleOptions);
-//                            }
-//                        }
-//                    });
-//                }
-//            }
-//        }
-//    }
-//
-//    public void run() {
-//        while( thread != null ) {
-//            result = "";
-//            Http ht  = new Http("http://pbl.jp/getloc.php", 1);
-//            ht.execute();
-//            try{
-//                Thread.sleep(5000);
-//            }catch(Exception e){}
-//        }
-//    }
-//    // 位置情報許可の確認
-//    public void checkPermission() {
-//        if(  ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
-//            // 許可されているときの処理は特になし
-//        }else{ // 拒否していた場合は許可を求める
-//            if( ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ){
-//                ActivityCompat.requestPermissions(MapsActivity.this,
-//                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION);
-//            }else{
-//                Toast.makeText(this, "許可されないとアプリが実行できません", Toast.LENGTH_SHORT).show();
-//                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,}, REQUEST_PERMISSION);
-//            }
-//        }
-//    }
-//
-//    // 結果の受け取り
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-//        if( requestCode == REQUEST_PERMISSION ){   // 使用が許可された
-//            if( grantResults[0] == PackageManager.PERMISSION_GRANTED ){
-//                return;
-//            }else{ // それでも拒否された時の対応
-//                Toast.makeText(this, "これ以上なにもできません", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-//
-//    private ServiceConnection serviceConnection = new ServiceConnection() {
-//        public void onServiceConnected(ComponentName className, IBinder service) {
-//            gpsService = ((GPSService.GPSServiceBinder)service).getService();
-//            gpsService.id = id;
-//            gpsService.startTracking(10000);
-//        }
-//        public void onServiceDisconnected(ComponentName name) {
-//            // TODO Auto-generated method stub
-//            gpsService = null;
-//        }
-//    };
-//}

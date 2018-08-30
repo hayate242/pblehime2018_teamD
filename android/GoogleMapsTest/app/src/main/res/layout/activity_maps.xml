@@ -19,9 +19,21 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:gravity="bottom"
-        tools:context=".MainActivity">
+        tools:context=".MainActivity"
+        android:id="@+id/bottom_layout">
+
+        <Button
+            android:id="@+id/helpBtn"
+            android:padding="5dp"
+            android:background="@android:color/holo_red_dark"
+            android:textColor="@android:color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="30sp"
+            android:text="救援信号発信"
+            />
 
         <!-- members -->
         <TextView
@@ -30,7 +42,7 @@
             android:background="@android:color/black"
             android:text="members"
             android:textColor="@android:color/white"
-            android:padding="30dp"
+            android:padding="10dp"
             android:textSize="20sp"
             android:id="@+id/membersText"/>
 
