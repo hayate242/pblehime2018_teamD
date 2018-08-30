@@ -409,10 +409,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //    統計情報表示
     static ArrayList<Double> datalat = new ArrayList<Double>();
     static ArrayList<Double> datalng = new ArrayList<Double>();
+    static double  dis = 0.0;
+
     public static double latlngcreate(double a, double n) {
         datalat.add(a);
         datalng.add(n);
-        double  dis = 0.0;
         float[] distance = new float[2];
         /*Marker marker;
         MarkerOptions options = new MarkerOptions()
@@ -423,11 +424,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         double[] array2 = new double[datalng.size()];
 
         for (int i = 0; i < datalat.size(); i++) {
-            array1[i ] = datalat.get(i);
-            array2[i ] = datalng.get(i);
+            array1[i] = datalat.get(i);
+            array2[i] = datalng.get(i);
         }
 
-        if(datalat.size()>0){
+        if(datalat.size() > 0){
             for(int i=1;i<datalat.size();i++){
                 PolylineOptions popt = new PolylineOptions();
                 popt.add(new LatLng(array1[i-1], array2[i - 1]));
@@ -438,27 +439,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         }
-        for (int i = 1; i < datalat.size(); i++) {
-           /* double t = Math.toRadians(array1[i] - array1[i-1]);
-            double g = Math.toRadians(array2[i] - array2[i-1]);
-            double A = Math.sin(t / 2) * Math.sin(t / 2) + Math.cos(Math.toRadians(array1[i-1])) * Math.cos(Math.toRadians(array1[i])) * Math.sin(g / 2) * Math.sin(g / 2);
-            double C = 2 * Math.atan2(Math.sqrt(A), Math.sqrt(1 - A));
-            double decimalNo = Math.pow(10, 10);
-            double D = r * C;
-            D = Math.round(decimalNo * distance / 1) / decimalNo;*/
 
-            Location.distanceBetween(array1[i - 1], array1[i], array2[i - 1], array2[i], distance); //緯度経度から移動距離計算
 
-            dis += distance[0];
-        }
-        change_status(dis);
+        Location.distanceBetween(Double.parseDouble(String.valueOf(datalat.get(datalat.size() - 1))), a, Double.parseDouble(String.valueOf(datalng.get(datalng.size()-1))), n, distance); //緯度経度から移動距離計算
+
+        dis += distance[0];
+
+        change_status(dis/10000000.0);
+        Log.d("distance", String.valueOf(dis));
 
         return dis;
     }
 
     private static void change_status(double dis) {
 
-        statusTextView.setText(String.format("走行距離：%s", dis));
+        if( dis >= 1000 ){
+            statusTextView.setText(String.format("走行距離：%.3f km", dis/1000.0));
+        }else {
+            statusTextView.setText(String.format("走行距離：%.3f m", dis));
+        }
     }
 
 
