@@ -41,9 +41,13 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.Dot;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PatternItem;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -54,6 +58,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Calendar;
 
 //バックグラウンド実行
@@ -76,6 +81,7 @@ import java.net.URL;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import android.widget.Toast;
 
@@ -87,7 +93,9 @@ import org.json.JSONObject;
 *
 * serviceを使ってバックグラウンド実行
 * */
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, Runnable  {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, Runnable,
+        GoogleMap.OnPolylineClickListener,
+        GoogleMap.OnPolygonClickListener  {
 
     private GoogleMap mMap;
     private final int REQUEST_PERMISSION = 1000;
@@ -357,7 +365,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         CameraPosition camerapos = new CameraPosition.Builder()
                 .target(new LatLng(33.845579, 132.765734)).zoom(15.5f).build();
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camerapos)); // 地図の中心の変更する
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camerapos)); //
+
+        // Add a polyline to the map.
+        Polyline polyline1 = googleMap.addPolyline((new PolylineOptions())
+                .clickable(true)
+                .add(new LatLng(-35.016, 143.321),
+                        new LatLng(-34.747, 145.592),
+                        new LatLng(-34.364, 147.891),
+                        new LatLng(-33.501, 150.217),
+                        new LatLng(-32.306, 149.248),
+                        new LatLng(-32.491, 147.309)));
+
+        // Set listeners for click events.
+        googleMap.setOnPolylineClickListener(this);
+        googleMap.setOnPolygonClickListener(this);
     }
 
     @Override
@@ -374,6 +396,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onPause();
     }
 
+    @Override
+    public void onPolygonClick(Polygon polygon) {
+
+    }
 
 
     public class Http extends AsyncTask<String, String, String> {
@@ -493,7 +519,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (idcnt > 1) idcnt--;
 
                                 for (int i = 0; i < idcnt; i++) {
-                                    String[] locaStr = array[i].split(",");
+                                    final String[] locaStr = array[i].split(",");
                                     latlng[i] = new LatLng(Double.valueOf(locaStr[3]), Double.valueOf(locaStr[4]));
                                     String _id = locaStr[0];
                                     String jikan = locaStr[2].substring(0, 2) + ":" + locaStr[2].substring(2, 4) + ":" + locaStr[2].substring(4);
@@ -535,7 +561,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             popt.add(latlng[i]); // 今の緯度経度
                                             popt.color(0xFF00B3FD);  //ARGBカラーを指定 (Aは透明度)
                                             popt.width(15);
+
                                             Polyline polyline = mMap.addPolyline(popt);
+
                                         }
                                     } else {
                                         cv.drawText(txt, 0, Math.abs(fm.ascent), w_paint);
@@ -554,6 +582,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             marker[i] = mMap.addMarker(options);
                                         }
                                     }
+                                    mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                                        @Override
+                                        public boolean onMarkerClick(Marker marker) {
+                                            // TODO Auto-generated method stub
+                                            Toast.makeText(getApplicationContext(), locaStr[0], Toast.LENGTH_LONG).show();
+                                            marker.showInfoWindow();
+                                            return false;
+                                        }
+                                    });
                                 }
                             }
                         });
@@ -596,6 +633,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,}, REQUEST_PERMISSION);
             }
         }
+    }
+
+/*
+*
+* polyline
+* */
+    private static final int PATTERN_GAP_LENGTH_PX = 20;
+    private static final PatternItem DOT = new Dot();
+    private static final PatternItem GAP = new Gap(PATTERN_GAP_LENGTH_PX);
+    //
+// Create a stroke pattern of a gap followed by a dot.
+    private static final List<PatternItem> PATTERN_POLYLINE_DOTTED = Arrays.asList(GAP, DOT);
+    @Override
+    public void onPolylineClick(Polyline polyline) {
+        // Flip from solid stroke to dotted stroke pattern.
+        if ((polyline.getPattern() == null) || (!polyline.getPattern().contains(DOT))) {
+            polyline.setPattern(PATTERN_POLYLINE_DOTTED);
+        } else {
+            // The default pattern is a solid stroke.
+            polyline.setPattern(null);
+        }
+
+        Toast.makeText(this, "Route type " + polyline.getTag().toString(),
+                Toast.LENGTH_SHORT).show();
     }
 
 
